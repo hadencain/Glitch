@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GLITCH.EXE</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier Prime', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .terminal {
+            background: #1a1a1a;
+            border: 2px solid #00ff00;
+            border-radius: 0;
+            padding: 20px;
+            max-width: 1200px;
+            width: 100%;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+            position: relative;
+            display: flex;
+            gap: 20px;
+        }
+
+        .terminal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 255, 0, 0.03) 2px,
+                rgba(0, 255, 0, 0.03) 4px
+            );
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .terminal::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle, transparent 40%, rgba(0, 255, 0, 0.1) 100%);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .terminal > * {
+            position: relative;
+            z-index: 3;
+        }
+
+        .main-content {
+            flex: 1;
+        }
+
+        .debug-panel {
+            width: 300px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(0, 255, 0, 0.5);
+            padding: 10px;
+            font-size: 0.75em;
+            height: fit-content;
+            max-height: 500px;
+            overflow: hidden;
+            position: sticky;
+            top: 0;
+        }
+
+        .debug-header {
+            color: #00ffff;
+            border-bottom: 1px solid rgba(0, 255, 0, 0.3);
+            padding-bottom: 5px;
+            margin-bottom: 8px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .debug-toggle {
+            background: none;
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            padding: 2px 8px;
+            font-size: 0.8em;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .debug-toggle:hover {
+            background: #00ffff;
+            color: #000;
+        }
+
+        .debug-log {
+            font-family: 'Courier Prime', monospace;
+            line-height: 1.2;
+            color: #00ff00;
+            white-space: pre-wrap;
+        }
+
+        .debug-line {
+            margin-bottom: 2px;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        .debug-line.fading {
+            opacity: 0.3;
+        }
+
+        .debug-line.error {
+            color: #ff4444;
+        }
+
+        .debug-line.warning {
+            color: #ffaa00;
+        }
+
+        .debug-line.info {
+            color: #00aaff;
+        }
+
+        .debug-line.perf {
+            color: #aa00ff;
+        }
+
+        .debug-stats {
+            border-top: 1px solid rgba(0, 255, 0, 0.3);
+            margin-top: 8px;
+            padding-top: 8px;
+            font-size: 0.9em;
+        }
+
+        .debug-stat {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+        }
+
+        .debug-panel.collapsed {
+            width: 40px;
+            padding: 5px;
+        }
+
+        .debug-panel.collapsed .debug-log,
+        .debug-panel.collapsed .debug-stats {
+            display: none;
+        }
+
+        .debug-panel.collapsed .debug-header {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            border-bottom: none;
+            border-right: 1px solid rgba(0, 255, 0, 0.3);
+            padding-right: 5px;
+            padding-bottom: 0;
+            margin-right: 5px;
+            margin-bottom: 0;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .debug-panel.collapsed .debug-toggle {
+            margin-top: 10px;
+        }
+
+        .header {
+            border-bottom: 1px solid #00ff00;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            font-size: 1.8em;
+            font-weight: bold;
+            text-align: center;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px #00ff00;
+            animation: flicker 2s infinite alternate;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 20px;
+            background: #00ff00;
+            animation: blink 1s infinite;
+            margin-left: 5px;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .upload-zone {
+            border: 1px dashed #00ff00;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            background: rgba(0, 255, 0, 0.05);
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .upload-zone:hover {
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .upload-zone.dragover {
+            background: rgba(0, 255, 0, 0.15);
+            border-color: #00ffff;
+        }
+
+        .upload-text {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            background: transparent;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 8px 16px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            background: #00ff00;
+            color: #000;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .effect-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border-color: #00ffff;
+            color: #00ffff;
+        }
+
+        .effect-btn:hover {
+            background: #00ffff;
+            color: #000;
+            box-shadow: 0 0 10px #00ffff;
+        }
+
+        .effect-btn.active {
+            background: #00ffff;
+            color: #000;
+            box-shadow: 0 0 15px #00ffff;
+        }
+
+        .video-container {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .video-wrapper {
+            border: 1px solid #00ff00;
+            background: #000;
+            position: relative;
+        }
+
+        video {
+            width: 100%;
+            height: auto;
+            display: block;
+            filter: contrast(1.1) brightness(0.9);
+        }
+
+        .controls {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0, 255, 0, 0.3);
+        }
+
+        .control-group:last-child {
+            border-bottom: none;
+        }
+
+        .control-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .probability-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .slider-container {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .slider {
+            width: 100%;
+            height: 4px;
+            background: rgba(0, 255, 0, 0.3);
+            outline: none;
+            border: none;
+            cursor: pointer;
+            appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #00ff00;
+            cursor: pointer;
+            border: 1px solid #000;
+            box-shadow: 0 0 5px #00ff00;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #00ff00;
+            cursor: pointer;
+            border: 1px solid #000;
+            border-radius: 0;
+            box-shadow: 0 0 5px #00ff00;
+        }
+
+        .probability-display {
+            font-weight: bold;
+            min-width: 60px;
+            text-align: right;
+            color: #00ffff;
+            text-shadow: 0 0 5px #00ffff;
+        }
+
+        .timeline-container {
+            flex: 1;
+            height: 4px;
+            background: rgba(0, 255, 0, 0.3);
+            cursor: pointer;
+            position: relative;
+            min-width: 200px;
+        }
+
+        .timeline-progress {
+            height: 100%;
+            background: #00ff00;
+            transition: width 0.1s ease;
+            box-shadow: 0 0 5px #00ff00;
+        }
+
+        .time-info {
+            font-size: 0.8em;
+            margin-top: 5px;
+            text-align: center;
+            color: rgba(0, 255, 0, 0.8);
+        }
+
+        .status-line {
+            margin-top: 15px;
+            padding: 8px;
+            background: rgba(0, 255, 0, 0.1);
+            border-left: 3px solid #00ff00;
+            font-size: 0.9em;
+        }
+
+        .status-prefix {
+            color: #00ffff;
+        }
+
+        .recording-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #ff0000;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        .glitch-info {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid rgba(0, 255, 0, 0.5);
+            background: rgba(0, 255, 0, 0.05);
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+
+        .glitch-info h3 {
+            color: #00ffff;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .error-zone {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid #ff0000;
+            color: #ff0000;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .terminal {
+                flex-direction: column;
+            }
+            
+            .debug-panel {
+                width: 100%;
+                order: 2;
+            }
+            
+            .control-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .probability-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .probability-display {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal">
+        <div class="main-content">
+            <div class="header">
+                <div class="title">GLITCH.EXE<span class="cursor"></span></div>
+            </div>
+            
+            <div class="upload-zone" id="uploadZone">
+                <div class="upload-text">>> DROP VIDEO FILE OR CLICK TO SELECT</div>
+                <button class="btn" onclick="document.getElementById('fileInput').click()">
+                    BROWSE FILES
+                </button>
+                <input type="file" id="fileInput" class="file-input" accept="video/*" />
+            </div>
+
+            <div class="video-container" id="videoContainer">
+                <div class="video-wrapper">
+                    <video id="videoPlayer" playsinline preload="none"></video>
+                </div>
+            </div>
+
+            <div class="controls" id="controls">
+                <div class="control-group">
+                    <div class="control-label">PLAYBACK CONTROLS</div>
+                    <div class="control-row">
+                        <button class="btn" id="playBtn">PLAY</button>
+                        <button class="btn" id="resetBtn">RESET</button>
+                        <button class="btn" id="muteBtn">MUTE</button>
+                        <button class="btn" id="recordBtn">REC</button>
+                        <button class="btn" id="downloadBtn" disabled>EXPORT</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-label">AUDIO VOLUME</div>
+                    <div class="control-row">
+                        <div class="probability-section">
+                            <div class="slider-container">
+                                <input type="range" class="slider" id="volumeSlider" 
+                                       min="0" max="100" value="70" />
+                            </div>
+                            <div class="probability-display" id="volumeDisplay">70%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-label">VISUAL EFFECTS</div>
+                    <div class="control-row">
+                        <button class="btn effect-btn" id="contrastBtn">CONTRAST</button>
+                        <button class="btn effect-btn" id="invertBtn">INVERT</button>
+                        <button class="btn effect-btn" id="blurBtn">BLUR</button>
+                        <button class="btn effect-btn" id="noiseBtn">NOISE</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-label">EFFECT INTENSITY</div>
+                    <div class="control-row">
+                        <div class="probability-section">
+                            <div class="slider-container">
+                                <input type="range" class="slider" id="effectIntensity" 
+                                       min="0" max="100" value="50" />
+                            </div>
+                            <div class="probability-display" id="intensityDisplay">50%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-label">FRAME PROBABILITY</div>
+                    <div class="control-row">
+                        <div class="probability-section">
+                            <div class="slider-container">
+                                <input type="range" class="slider" id="probabilitySlider" 
+                                       min="0" max="100" value="75" />
+                            </div>
+                            <div class="probability-display" id="probabilityDisplay">75%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-label">TIMELINE</div>
+                    <div class="control-row">
+                        <div class="timeline-container" id="timelineContainer">
+                            <div class="timeline-progress" id="timelineProgress"></div>
+                        </div>
+                    </div>
+                    <div class="time-info" id="timeDisplay">00:00 / 00:00</div>
+                </div>
+            </div>
+
+            <div class="status-line">
+                <span class="status-prefix">STATUS:</span> 
+                <span id="statusText">WAITING FOR VIDEO INPUT...</span>
+            </div>
+
+            <div class="glitch-info">
+                <h3>GLITCH.EXE v1.3</h3>
+                <p>OPTIMIZED TEMPORAL VIDEO CORRUPTION ENGINE</p>
+            </div>
+        </div>
+
+        <div class="debug-panel" id="debugPanel">
+            <div class="debug-header">
+                <span>DEBUG LOG</span>
+                <button class="debug-toggle" id="debugToggle">−</button>
+            </div>
+            <div class="debug-log" id="debugLog"></div>
+            <div class="debug-stats" id="debugStats">
+                <div class="debug-stat">
+                    <span>FPS:</span>
+                    <span id="fpsCounter">0</span>
+                </div>
+                <div class="debug-stat">
+                    <span>Frame Time:</span>
+                    <span id="frameTime">0ms</span>
+                </div>
+                <div class="debug-stat">
+                    <span>Video Ready:</span>
+                    <span id="videoReady">NO</span>
+                </div>
+                <div class="debug-stat">
+                    <span>Effects:</span>
+                    <span id="activeEffects">NONE</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let video = document.getElementById('videoPlayer');
+        let canvas = document.createElement('canvas');
+        let ctx = canvas.getContext('2d');
+        let audioContext, audioSource, gainNode;
+        let mediaRecorder, recordedChunks = [];
+        let isPlaying = false;
+        let isRecording = false;
+        let isMuted = false;
+        let animationId;
+        let frameProbability = 0.75;
+        let currentFrameTime = 0;
+        let duration = 0;
+        let frameRate = 30;
+        let volume = 0.7;
+        let effectIntensity = 0.5;
+
+        // Performance monitoring
+        let frameCount = 0;
+        let lastFrameTime = 0;
+        let fpsHistory = [];
+        let debugLines = [];
+        const MAX_DEBUG_LINES = 12;
+
+        // Lightweight effects state
+        let activeEffects = {
+            contrast: false,
+            invert: false,
+            blur: false,
+            noise: false
+        };
+
+        // DOM elements
+        const elements = {
+            uploadZone: document.getElementById('uploadZone'),
+            fileInput: document.getElementById('fileInput'),
+            videoContainer: document.getElementById('videoContainer'),
+            controls: document.getElementById('controls'),
+            playBtn: document.getElementById('playBtn'),
+            resetBtn: document.getElementById('resetBtn'),
+            muteBtn: document.getElementById('muteBtn'),
+            volumeSlider: document.getElementById('volumeSlider'),
+            volumeDisplay: document.getElementById('volumeDisplay'),
+            probabilitySlider: document.getElementById('probabilitySlider'),
+            probabilityDisplay: document.getElementById('probabilityDisplay'),
+            effectIntensity: document.getElementById('effectIntensity'),
+            intensityDisplay: document.getElementById('intensityDisplay'),
+            timelineContainer: document.getElementById('timelineContainer'),
+            timelineProgress: document.getElementById('timelineProgress'),
+            timeDisplay: document.getElementById('timeDisplay'),
+            recordBtn: document.getElementById('recordBtn'),
+            downloadBtn: document.getElementById('downloadBtn'),
+            statusText: document.getElementById('statusText'),
+            // Simple effect buttons
+            contrastBtn: document.getElementById('contrastBtn'),
+            invertBtn: document.getElementById('invertBtn'),
+            blurBtn: document.getElementById('blurBtn'),
+            noiseBtn: document.getElementById('noiseBtn'),
+            // Debug elements
+            debugPanel: document.getElementById('debugPanel'),
+            debugToggle: document.getElementById('debugToggle'),
+            debugLog: document.getElementById('debugLog'),
+            fpsCounter: document.getElementById('fpsCounter'),
+            frameTime: document.getElementById('frameTime'),
+            videoReady: document.getElementById('videoReady'),
+            activeEffectsDisplay: document.getElementById('activeEffects')
+        };
+
+        // Debug logging system
+        function debugLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString().slice(-8);
+            const line = `${timestamp} ${message}`;
+            
+            debugLines.unshift({ text: line, type: type, timestamp: Date.now() });
+            
+            if (debugLines.length > MAX_DEBUG_LINES) {
+                debugLines = debugLines.slice(0, MAX_DEBUG_LINES);
+            }
+            
+            updateDebugDisplay();
+        }
+
+        function updateDebugDisplay() {
+            const logContainer = elements.debugLog;
+            logContainer.innerHTML = '';
+            
+            debugLines.forEach((line, index) => {
+                const div = document.createElement('div');
+                div.className = `debug-line ${line.type}`;
+                div.textContent = line.text;
+                
+                if (index > 6) {
+                    div.classList.add('fading');
+                }
+                
+                logContainer.appendChild(div);
+            });
+        }
+
+        function updatePerformanceStats() {
+            const now = performance.now();
+            const deltaTime = now - lastFrameTime;
+            lastFrameTime = now;
+            
+            // Calculate FPS
+            fpsHistory.push(1000 / deltaTime);
+            if (fpsHistory.length > 10) {
+                fpsHistory.shift();
+            }
+            const avgFps = fpsHistory.reduce((a, b) => a + b, 0) / fpsHistory.length;
+            
+            elements.fpsCounter.textContent = Math.round(avgFps);
+            elements.frameTime.textContent = Math.round(deltaTime) + 'ms';
+            elements.videoReady.textContent = video.readyState >= 2 ? 'YES' : 'NO';
+            
+            const activeList = Object.keys(activeEffects).filter(key => activeEffects[key]);
+            elements.activeEffectsDisplay.textContent = activeList.length > 0 ? activeList.join(',').toUpperCase() : 'NONE';
+            
+            // Performance warnings
+            if (avgFps < 25) {
+                debugLog(`Low FPS: ${Math.round(avgFps)}`, 'warning');
+            }
+        }
+
+        // File upload handlers
+        function initializeFileHandlers() {
+            elements.uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                elements.uploadZone.classList.add('dragover');
+            });
+
+            elements.uploadZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                elements.uploadZone.classList.remove('dragover');
+            });
+
+            elements.uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                elements.uploadZone.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFile(files[0]);
+                }
+            });
+
+            elements.uploadZone.addEventListener('click', () => {
+                elements.fileInput.click();
+            });
+
+            elements.fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFile(e.target.files[0]);
+                }
+            });
+        }
+
+        function handleFile(file) {
+            debugLog(`Processing: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)`, 'info');
+            
+            if (!file.type.startsWith('video/')) {
+                debugLog('Invalid file type', 'error');
+                elements.statusText.textContent = 'ERROR: INVALID FILE TYPE. VIDEO REQUIRED.';
+                return;
+            }
+
+            elements.statusText.textContent = 'LOADING VIDEO DATA...';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                debugLog('File read complete', 'info');
+                const arrayBuffer = e.target.result;
+                const blob = new Blob([arrayBuffer], { type: file.type });
+                
+                const dataReader = new FileReader();
+                dataReader.onload = function(event) {
+                    debugLog('Setting video source', 'info');
+                    video.src = event.target.result;
+                    video.load();
+                };
+                dataReader.onerror = function() {
+                    debugLog('Data URL creation failed', 'error');
+                    showError('CANNOT LOAD VIDEO IN SANDBOX ENVIRONMENT');
+                };
+                dataReader.readAsDataURL(blob);
+            };
+            
+            reader.onerror = function() {
+                debugLog('File read failed', 'error');
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Video event handlers
+        function initializeVideoHandlers() {
+            video.addEventListener('loadedmetadata', () => {
+                debugLog(`Video loaded: ${video.videoWidth}x${video.videoHeight}, ${video.duration.toFixed(1)}s`, 'info');
+                
+                duration = video.duration;
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 480;
+                video.volume = volume;
+                
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    audioSource = audioContext.createMediaElementSource(video);
+                    gainNode = audioContext.createGain();
+                    audioSource.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    gainNode.gain.value = volume;
+                    debugLog('Audio context ready', 'info');
+                } catch (error) {
+                    debugLog('Audio context failed: ' + error.message, 'warning');
+                }
+                
+                elements.videoContainer.style.display = 'block';
+                elements.controls.style.display = 'block';
+                updateTimeDisplay();
+                elements.statusText.textContent = 'VIDEO LOADED. READY FOR GLITCH PROCESSING.';
+            });
+
+            video.addEventListener('error', (e) => {
+                debugLog('Video error: ' + (video.error ? video.error.message : 'Unknown'), 'error');
+                showError('VIDEO LOAD FAILED. TRY DIFFERENT FORMAT OR RUN LOCALLY.');
+            });
+
+            video.addEventListener('waiting', () => {
+                debugLog('Video buffering...', 'warning');
+            });
+
+            video.addEventListener('canplay', () => {
+                debugLog('Video ready to play', 'info');
+            });
+        }
+
+        // Control handlers
+        function initializeControls() {
+            // Debug panel toggle
+            elements.debugToggle.addEventListener('click', () => {
+                elements.debugPanel.classList.toggle('collapsed');
+                elements.debugToggle.textContent = elements.debugPanel.classList.contains('collapsed') ? '+' : '−';
+            });
+
+            // Playback controls
+            elements.playBtn.addEventListener('click', togglePlay);
+            elements.resetBtn.addEventListener('click', resetVideo);
+            elements.muteBtn.addEventListener('click', toggleMute);
+            elements.recordBtn.addEventListener('click', toggleRecording);
+
+            // Sliders
+            elements.volumeSlider.addEventListener('input', (e) => {
+                volume = e.target.value / 100;
+                video.volume = isMuted ? 0 : volume;
+                if (gainNode) gainNode.gain.value = isMuted ? 0 : volume;
+                elements.volumeDisplay.textContent = e.target.value + '%';
+            });
+
+            elements.probabilitySlider.addEventListener('input', (e) => {
+                frameProbability = e.target.value / 100;
+                elements.probabilityDisplay.textContent = e.target.value + '%';
+            });
+
+            elements.effectIntensity.addEventListener('input', (e) => {
+                effectIntensity = e.target.value / 100;
+                elements.intensityDisplay.textContent = e.target.value + '%';
+                updateVideoFilters();
+            });
+
+            // Simple effect buttons
+            setupEffectButton(elements.contrastBtn, 'contrast');
+            setupEffectButton(elements.invertBtn, 'invert');
+            setupEffectButton(elements.blurBtn, 'blur');
+            setupEffectButton(elements.noiseBtn, 'noise');
+
+            // Timeline
+            elements.timelineContainer.addEventListener('click', (e) => {
+                const rect = elements.timelineContainer.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const percentage = clickX / rect.width;
+                currentFrameTime = percentage * duration;
+                video.currentTime = currentFrameTime;
+                updateTimeDisplay();
+                updateTimeline();
+            });
+        }
+
+        function setupEffectButton(btn, effectName) {
+            btn.addEventListener('click', () => {
+                activeEffects[effectName] = !activeEffects[effectName];
+                btn.classList.toggle('active', activeEffects[effectName]);
+                updateVideoFilters();
+                updateEffectStatus();
+            });
+        }
+
+        function updateVideoFilters() {
+            // Use CSS filters instead of pixel manipulation for performance
+            let filters = ['contrast(1.1)', 'brightness(0.9)'];
+            
+            if (activeEffects.contrast) {
+                const contrastVal = 1 + (effectIntensity * 2);
+                filters.push(`contrast(${contrastVal})`);
+            }
+            
+            if (activeEffects.invert) {
+                filters.push(`invert(${effectIntensity})`);
+            }
+            
+            if (activeEffects.blur) {
+                const blurVal = effectIntensity * 3;
+                filters.push(`blur(${blurVal}px)`);
+            }
+            
+            video.style.filter = filters.join(' ');
+            
+            // Apply noise to canvas if active
+            if (activeEffects.noise && video.readyState >= 2) {
+                applyNoiseToCanvas();
+            }
+        }
+
+        function applyNoiseToCanvas() {
+            // Lightweight noise effect applied to canvas
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            const noiseLevel = effectIntensity * 50;
+            
+            // Apply noise to random pixels (much lighter than before)
+            for (let i = 0; i < data.length; i += 4) {
+                if (Math.random() < noiseLevel / 2000) {
+                    const noise = Math.random() * 255;
+                    data[i] = noise;     // R
+                    data[i + 1] = noise; // G
+                    data[i + 2] = noise; // B
+                }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        function updateEffectStatus() {
+            const activeList = Object.keys(activeEffects).filter(key => activeEffects[key]);
+            if (activeList.length > 0) {
+                elements.statusText.textContent = `EFFECTS: ${activeList.join(', ').toUpperCase()}`;
+            } else {
+                elements.statusText.textContent = isPlaying ? 'GLITCH PROCESSING ACTIVE...' : 'READY FOR GLITCH PROCESSING';
+            }
+        }
+
+        // Playback functions
+        function togglePlay() {
+            if (isPlaying) {
+                pause();
+            } else {
+                play();
+            }
+        }
+
+        function play() {
+            debugLog('Starting playback', 'info');
+            
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            isPlaying = true;
+            elements.playBtn.textContent = 'PAUSE';
+            elements.statusText.textContent = 'GLITCH PROCESSING ACTIVE...';
+            
+            video.play().catch(error => {
+                debugLog('Play failed: ' + error.message, 'error');
+            });
+            
+            glitchLoop();
+        }
+
+        function pause() {
+            debugLog('Pausing playback', 'info');
+            isPlaying = false;
+            elements.playBtn.textContent = 'PLAY';
+            elements.statusText.textContent = 'PAUSED';
+            video.pause();
+            cancelAnimationFrame(animationId);
+        }
+
+        function resetVideo() {
+            pause();
+            currentFrameTime = 0;
+            video.currentTime = 0;
+            updateTimeDisplay();
+            updateTimeline();
+            debugLog('Video reset', 'info');
+            elements.statusText.textContent = 'RESET TO START POSITION';
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            video.muted = isMuted;
+            if (gainNode) gainNode.gain.value = isMuted ? 0 : volume;
+            elements.muteBtn.textContent = isMuted ? 'UNMUTE' : 'MUTE';
+            debugLog(isMuted ? 'Audio muted' : 'Audio enabled', 'info');
+        }
+
+        // Main glitch loop - optimized for performance
+        function glitchLoop() {
+            if (!isPlaying) return;
+
+            const loopStart = performance.now();
+            frameCount++;
+
+            // Probabilistic frame advancement with bidirectional movement
+            if (Math.random() < frameProbability) {
+                currentFrameTime += 1/frameRate;
+            } else {
+                if (Math.random() < 0.5) {
+                    currentFrameTime += (1/frameRate) * (0.5 + Math.random() * 0.5);
+                } else {
+                    currentFrameTime -= (1/frameRate) * (0.2 + Math.random() * 0.3);
+                }
+            }
+
+            currentFrameTime = Math.max(0, Math.min(currentFrameTime, duration));
+            
+            if (currentFrameTime >= duration) {
+                currentFrameTime = duration;
+                pause();
+                debugLog('Playback complete', 'info');
+                elements.statusText.textContent = 'GLITCH SEQUENCE COMPLETE';
+                return;
+            }
+
+            // Only seek if time difference is significant (performance optimization)
+            if (Math.abs(video.currentTime - currentFrameTime) > 0.05) {
+                video.currentTime = currentFrameTime;
+            }
+
+            // Only apply canvas effects if noise is active and video is ready
+            if (activeEffects.noise && video.readyState >= 2) {
+                applyNoiseToCanvas();
+            } else if (video.readyState >= 2) {
+                // Just draw the video frame without effects for recording
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            }
+            
+            updateTimeDisplay();
+            updateTimeline();
+
+            // Update performance stats every 30 frames
+            if (frameCount % 30 === 0) {
+                updatePerformanceStats();
+            }
+
+            const targetFrameTime = 1000 / frameRate;
+            const loopTime = performance.now() - loopStart;
+            
+            animationId = requestAnimationFrame(() => {
+                const delay = Math.max(0, targetFrameTime - loopTime);
+                setTimeout(glitchLoop, delay);
+            });
+        }
+
+        // Timeline and display updates
+        function updateTimeline() {
+            const percentage = duration > 0 ? (currentFrameTime / duration) * 100 : 0;
+            elements.timelineProgress.style.width = percentage + '%';
+        }
+
+        function updateTimeDisplay() {
+            const formatTime = (seconds) => {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            };
+            
+            elements.timeDisplay.textContent = `${formatTime(currentFrameTime)} / ${formatTime(duration)}`;
+        }
+
+        // Recording functions
+        function toggleRecording() {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+
+        function startRecording() {
+            recordedChunks = [];
+            debugLog('Starting recording', 'info');
+            
+            try {
+                const videoStream = canvas.captureStream(frameRate);
+                let combinedStream = videoStream;
+                
+                if (audioContext) {
+                    try {
+                        const audioDestination = audioContext.createMediaStreamDestination();
+                        gainNode.connect(audioDestination);
+                        const audioStream = audioDestination.stream;
+                        
+                        combinedStream = new MediaStream([
+                            ...videoStream.getVideoTracks(),
+                            ...audioStream.getAudioTracks()
+                        ]);
+                    } catch (error) {
+                        debugLog('Audio recording failed, video only', 'warning');
+                    }
+                }
+
+                mediaRecorder = new MediaRecorder(combinedStream, {
+                    mimeType: 'video/webm;codecs=vp9,opus'
+                });
+
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) {
+                        recordedChunks.push(e.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    elements.downloadBtn.disabled = false;
+                    elements.downloadBtn.onclick = () => {
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'glitched-output.webm';
+                        a.click();
+                    };
+                    debugLog('Recording saved', 'info');
+                    elements.statusText.textContent = 'RECORDING SAVED. READY FOR EXPORT.';
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                elements.recordBtn.innerHTML = '<span class="recording-indicator"></span>STOP';
+                elements.statusText.textContent = 'RECORDING...';
+            } catch (error) {
+                debugLog('Recording failed: ' + error.message, 'error');
+                elements.statusText.textContent = 'ERROR: RECORDING NOT SUPPORTED';
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            isRecording = false;
+            elements.recordBtn.textContent = 'REC';
+            debugLog('Recording stopped', 'info');
+        }
+
+        // Error handling
+        function showError(message) {
+            elements.statusText.textContent = 'ERROR: ' + message;
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-zone';
+            errorDiv.innerHTML = `
+                <h3>SYSTEM ERROR</h3>
+                <p>${message}</p>
+                <p>TO USE THIS TOOL:</p>
+                <p>1. SAVE THIS PAGE AS HTML FILE</p>
+                <p>2. OPEN IN BROWSER LOCALLY</p>
+                <p>3. OR RUN ON LOCAL SERVER</p>
+            `;
+            
+            if (!document.querySelector('.error-zone')) {
+                document.querySelector('.main-content').appendChild(errorDiv);
+            }
+        }
+
+        // Initialize application
+        function initializeApp() {
+            debugLog('GLITCH.EXE v1.3 initializing...', 'info');
+            
+            initializeFileHandlers();
+            initializeVideoHandlers();
+            initializeControls();
+            
+            // Set initial display values
+            elements.probabilityDisplay.textContent = '75%';
+            elements.volumeDisplay.textContent = '70%';
+            elements.intensityDisplay.textContent = '50%';
+            
+            // Start performance monitoring
+            setInterval(updatePerformanceStats, 1000);
+            
+            debugLog('Application ready', 'info');
+        }
+
+        // Start the application
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>
