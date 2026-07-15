@@ -6,17 +6,30 @@
     <title>GLITCH.EXE</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        :root {
+            --bg:      #0d0d0d;
+            --surface: #141414;
+            --surf2:   #1c1c1c;
+            --border:  #2a2a2a;
+            --border2: #3a3a3a;
+            --text:    #e8e8e8;
+            --dim:     #666;
+            --dimmer:  #444;
+            --red:     #cc3333;
+            --mono:    'Courier Prime', monospace;
+        }
+
         body {
-            font-family: 'Courier Prime', monospace;
-            background: #0a0a0a;
-            color: #00ff00;
+            font-family: var(--mono);
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -26,61 +39,25 @@
         }
 
         .terminal {
-            background: #1a1a1a;
-            border: 2px solid #00ff00;
-            border-radius: 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
             padding: 20px;
             max-width: 1200px;
             width: 100%;
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
-            position: relative;
             display: flex;
             gap: 20px;
         }
 
-        .terminal::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 2px,
-                rgba(0, 255, 0, 0.03) 2px,
-                rgba(0, 255, 0, 0.03) 4px
-            );
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .terminal::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle, transparent 40%, rgba(0, 255, 0, 0.1) 100%);
-            pointer-events: none;
-            z-index: 2;
-        }
-
-        .terminal > * {
-            position: relative;
-            z-index: 3;
-        }
-
         .main-content {
             flex: 1;
+            min-width: 0;
         }
 
         .debug-panel {
             width: 300px;
-            background: rgba(0, 0, 0, 0.8);
-            border: 1px solid rgba(0, 255, 0, 0.5);
+            flex-shrink: 0;
+            background: var(--bg);
+            border: 1px solid var(--border);
             padding: 10px;
             font-size: 0.75em;
             height: fit-content;
@@ -91,20 +68,21 @@
         }
 
         .debug-header {
-            color: #00ffff;
-            border-bottom: 1px solid rgba(0, 255, 0, 0.3);
+            color: var(--dim);
+            border-bottom: 1px solid var(--border);
             padding-bottom: 5px;
             margin-bottom: 8px;
             font-weight: bold;
+            letter-spacing: 1px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .debug-toggle {
-            background: none;
-            border: 1px solid #00ffff;
-            color: #00ffff;
+            background: var(--surf2);
+            border: 1px solid var(--border2);
+            color: var(--text);
             padding: 2px 8px;
             font-size: 0.8em;
             cursor: pointer;
@@ -112,19 +90,21 @@
         }
 
         .debug-toggle:hover {
-            background: #00ffff;
+            background: var(--text);
             color: #000;
+            border-color: var(--text);
         }
 
         .debug-log {
-            font-family: 'Courier Prime', monospace;
+            font-family: var(--mono);
             line-height: 1.2;
-            color: #00ff00;
+            color: var(--dim);
             white-space: pre-wrap;
         }
 
         .debug-line {
             margin-bottom: 2px;
+            color: var(--dim);
             opacity: 1;
             transition: opacity 0.5s ease;
         }
@@ -134,23 +114,23 @@
         }
 
         .debug-line.error {
-            color: #ff4444;
+            color: var(--red);
         }
 
         .debug-line.warning {
-            color: #ffaa00;
+            color: #888;
         }
 
         .debug-line.info {
-            color: #00aaff;
+            color: var(--dim);
         }
 
         .debug-line.perf {
-            color: #aa00ff;
+            color: var(--dimmer);
         }
 
         .debug-stats {
-            border-top: 1px solid rgba(0, 255, 0, 0.3);
+            border-top: 1px solid var(--border);
             margin-top: 8px;
             padding-top: 8px;
             font-size: 0.9em;
@@ -176,7 +156,7 @@
             writing-mode: vertical-rl;
             text-orientation: mixed;
             border-bottom: none;
-            border-right: 1px solid rgba(0, 255, 0, 0.3);
+            border-right: 1px solid var(--border);
             padding-right: 5px;
             padding-bottom: 0;
             margin-right: 5px;
@@ -192,32 +172,26 @@
         }
 
         .header {
-            border-bottom: 1px solid #00ff00;
+            border-bottom: 1px solid var(--border);
             padding-bottom: 10px;
             margin-bottom: 20px;
         }
 
         .title {
-            font-size: 1.8em;
-            font-weight: bold;
+            font-size: 1.2em;
+            font-weight: 700;
             text-align: center;
-            letter-spacing: 2px;
-            text-shadow: 0 0 10px #00ff00;
-            animation: flicker 2s infinite alternate;
-        }
-
-        @keyframes flicker {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
+            letter-spacing: 3px;
         }
 
         .cursor {
             display: inline-block;
-            width: 10px;
-            height: 20px;
-            background: #00ff00;
+            width: 8px;
+            height: 14px;
+            background: var(--text);
             animation: blink 1s infinite;
             margin-left: 5px;
+            vertical-align: middle;
         }
 
         @keyframes blink {
@@ -226,26 +200,28 @@
         }
 
         .upload-zone {
-            border: 1px dashed #00ff00;
+            border: 1px dashed var(--border2);
             padding: 30px;
             text-align: center;
             margin-bottom: 20px;
-            background: rgba(0, 255, 0, 0.05);
+            background: var(--surf2);
             cursor: pointer;
-            transition: background 0.3s ease;
+            transition: background 0.12s, border-color 0.12s;
         }
 
         .upload-zone:hover {
-            background: rgba(0, 255, 0, 0.1);
+            background: #202020;
+            border-color: var(--dim);
         }
 
         .upload-zone.dragover {
-            background: rgba(0, 255, 0, 0.15);
-            border-color: #00ffff;
+            background: #242424;
+            border-color: var(--text);
         }
 
         .upload-text {
-            font-size: 1.1em;
+            font-size: 0.9em;
+            letter-spacing: 1px;
             margin-bottom: 10px;
         }
 
@@ -254,45 +230,35 @@
         }
 
         .btn {
-            background: transparent;
-            color: #00ff00;
-            border: 1px solid #00ff00;
-            padding: 8px 16px;
-            font-family: 'Courier Prime', monospace;
-            font-size: 0.9em;
+            background: var(--surf2);
+            color: var(--text);
+            border: 1px solid var(--border2);
+            padding: 7px 14px;
+            font-family: var(--mono);
+            font-size: 0.8em;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: background 0.12s, color 0.12s, border-color 0.12s;
             text-transform: uppercase;
             letter-spacing: 1px;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
-        .btn:hover {
-            background: #00ff00;
+        .btn:hover:not(:disabled) {
+            background: var(--text);
             color: #000;
-            box-shadow: 0 0 10px #00ff00;
+            border-color: var(--text);
         }
 
         .btn:disabled {
-            opacity: 0.5;
+            opacity: 0.3;
             cursor: not-allowed;
         }
 
-        .effect-btn {
-            background: rgba(0, 255, 255, 0.1);
-            border-color: #00ffff;
-            color: #00ffff;
-        }
-
-        .effect-btn:hover {
-            background: #00ffff;
-            color: #000;
-            box-shadow: 0 0 10px #00ffff;
-        }
-
         .effect-btn.active {
-            background: #00ffff;
+            background: var(--text);
             color: #000;
-            box-shadow: 0 0 15px #00ffff;
+            border-color: var(--text);
         }
 
         .video-container {
@@ -301,7 +267,7 @@
         }
 
         .video-wrapper {
-            border: 1px solid #00ff00;
+            border: 1px solid var(--border);
             background: #000;
             position: relative;
         }
@@ -321,7 +287,7 @@
         .control-group {
             margin-bottom: 15px;
             padding: 10px 0;
-            border-bottom: 1px solid rgba(0, 255, 0, 0.3);
+            border-bottom: 1px solid var(--border);
         }
 
         .control-group:last-child {
@@ -331,7 +297,8 @@
         .control-label {
             display: block;
             margin-bottom: 8px;
-            font-size: 0.9em;
+            font-size: 0.72em;
+            color: var(--dim);
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -357,8 +324,8 @@
 
         .slider {
             width: 100%;
-            height: 4px;
-            background: rgba(0, 255, 0, 0.3);
+            height: 2px;
+            background: var(--border2);
             outline: none;
             border: none;
             cursor: pointer;
@@ -367,36 +334,34 @@
 
         .slider::-webkit-slider-thumb {
             appearance: none;
-            width: 20px;
-            height: 20px;
-            background: #00ff00;
+            width: 14px;
+            height: 14px;
+            background: var(--text);
             cursor: pointer;
-            border: 1px solid #000;
-            box-shadow: 0 0 5px #00ff00;
         }
 
         .slider::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            background: #00ff00;
+            width: 14px;
+            height: 14px;
+            background: var(--text);
             cursor: pointer;
-            border: 1px solid #000;
+            border: none;
             border-radius: 0;
-            box-shadow: 0 0 5px #00ff00;
         }
 
+        .slider:disabled { opacity: 0.3; cursor: not-allowed; }
+
         .probability-display {
-            font-weight: bold;
-            min-width: 60px;
+            font-size: 0.85em;
+            min-width: 46px;
             text-align: right;
-            color: #00ffff;
-            text-shadow: 0 0 5px #00ffff;
+            color: var(--text);
         }
 
         .timeline-container {
             flex: 1;
-            height: 4px;
-            background: rgba(0, 255, 0, 0.3);
+            height: 2px;
+            background: var(--border2);
             cursor: pointer;
             position: relative;
             min-width: 200px;
@@ -404,35 +369,34 @@
 
         .timeline-progress {
             height: 100%;
-            background: #00ff00;
+            background: var(--text);
             transition: width 0.1s ease;
-            box-shadow: 0 0 5px #00ff00;
         }
 
         .time-info {
-            font-size: 0.8em;
+            font-size: 0.72em;
             margin-top: 5px;
             text-align: center;
-            color: rgba(0, 255, 0, 0.8);
+            color: var(--dim);
         }
 
         .status-line {
             margin-top: 15px;
             padding: 8px;
-            background: rgba(0, 255, 0, 0.1);
-            border-left: 3px solid #00ff00;
-            font-size: 0.9em;
+            background: var(--surf2);
+            border-left: 2px solid var(--border2);
+            font-size: 0.8em;
         }
 
         .status-prefix {
-            color: #00ffff;
+            color: var(--dim);
         }
 
         .recording-indicator {
             display: inline-block;
             width: 8px;
             height: 8px;
-            background: #ff0000;
+            background: var(--red);
             border-radius: 50%;
             margin-right: 8px;
             animation: pulse 1s infinite;
@@ -446,23 +410,25 @@
         .glitch-info {
             margin-top: 20px;
             padding: 15px;
-            border: 1px solid rgba(0, 255, 0, 0.5);
-            background: rgba(0, 255, 0, 0.05);
-            font-size: 0.85em;
+            border: 1px solid var(--border);
+            background: var(--surf2);
+            font-size: 0.8em;
             line-height: 1.4;
+            color: var(--dim);
         }
 
         .glitch-info h3 {
-            color: #00ffff;
+            color: var(--text);
+            font-size: 0.9em;
             margin-bottom: 8px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
         .error-zone {
-            background: rgba(255, 0, 0, 0.1);
-            border: 1px solid #ff0000;
-            color: #ff0000;
+            background: var(--surf2);
+            border: 1px solid var(--red);
+            color: var(--red);
             padding: 15px;
             margin-top: 15px;
         }
